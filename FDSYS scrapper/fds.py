@@ -11,7 +11,7 @@
 ##########################
 
 import mechanize, sys, os, time, random, pprint
-
+from BeautifulSoup import BeautifulSoup
 
 ###################################################
 #Section 2: Creating Directory to Place Zip Files #
@@ -60,13 +60,20 @@ def grab_meta(hr_links):
 	br=mechanize.Browser()
 	br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
 	br.set_handle_robots(False)
-	for link in hr_links:
-		lnk = link.replace("amp;", "")
-		new_link = "http://www.gpo.gov" + lnk
-		response = br.open(new_link)
-		for l in br.links():
-		    print l.text, l.url
+	new_link = "http://www.gpo.gov" + hr_links
+	print new_link
+	response = br.open(new_link)
+	html = response.read()
+	soup = BeautifulSoup(html)
+	pp = pprint.PrettyPrinter(indent=4)
+	pp.pprint(html)
 
+    # tags = soup.findAll('a',href=True)      
+    # for tag in tags:
+    #     print str(tag['href'])
+    #     if "zip" in tag['href']:
+    #         zipfiles.append(str(tag['href']))
+    #         zipname.append(str(tag.string))
 
 ####################################				
 # Section 4: Running Functions 	   #
@@ -77,9 +84,10 @@ y=len(hr_links)
 print hr_links
 print y
 
-# for i in range(y):
-# 	print "Working on this link:" + hr_links[i]
-# 	grab_meta(hr_links[i])
+for i in range(y):
+	print "Working on this link:" + hr_links[i]
+	grab_meta(hr_links[i])
+
 
 
 
