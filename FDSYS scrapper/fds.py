@@ -1,8 +1,8 @@
-####################################################
-### FD SYS Scrapping Project | June 29th, 2015 	 ###
-####################################################
+#!/usr/bin/python
 
-
+####################################################################
+### FD SYS Scrapping Project | William Isaac | June 29th, 2015 	 ###
+####################################################################
 
 
 
@@ -10,23 +10,16 @@
 #Section 1: Module Import#
 ##########################
 
-import mechanize, sys, spynner, time, os, pyquery,random, django
-from time import sleep
-from StringIO import StringIO
-import urllib, urllib2, urlparse
-from urllib2 import urlopen, URLError, HTTPError
-from BeautifulSoup import BeautifulSoup
-import zipfile
-import re
-import pprint
-import shutil
+import mechanize, sys, os, time, random, pprint
+
 
 ###################################################
 #Section 2: Creating Directory to Place Zip Files #
 ###################################################
 
-new_path = "/Volumes/Gdrive Backup Mac Pro 2 /hansardfiles/"
-new_path_1 = os.path.expanduser(new_path)+'zip_files'
+new_path = "/GitHub/US_congress/FDSYS scrapper"
+new_path_1 = os.path.expanduser(new_path)+'/output'
+
 
 #setting date and time
 nname = time.strftime("%b")
@@ -46,7 +39,7 @@ def grab_links():
 	src_links=[]
 	hr_links=[]
 	#Instead a single link, we can simply create an array of the links in the archive
-	for i in range(0:467):
+	for i in range(2):
 		i=+1
 		tmp_link = 'http://www.gpo.gov/fdsys/search/search.action?sr={0}&originalSearch=&st=collection%3aCHRG+and+content%3a(teacher+quality)&ps=10&na=&se=&sb=re&timeFrame=&dateBrowse=&govAuthBrowse=&collection=&historical=false'.format(i)
 		src_links.append(tmp_link)
@@ -68,7 +61,25 @@ def grab_meta(hr_links):
 	br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
 	br.set_handle_robots(False)
 	for link in hr_links:
+		lnk = link.replace("amp;", "")
+		new_link = "http://www.gpo.gov" + lnk
+		response = br.open(new_link)
+		for l in br.links():
+		    print l.text, l.url
 
+
+####################################				
+# Section 4: Running Functions 	   #
+####################################
+hr_links = grab_links()
+y=len(hr_links)
+
+print hr_links
+print y
+
+# for i in range(y):
+# 	print "Working on this link:" + hr_links[i]
+# 	grab_meta(hr_links[i])
 
 
 
