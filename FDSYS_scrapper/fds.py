@@ -18,7 +18,7 @@ from BeautifulSoup import BeautifulSoup
 ###################################################
 
 new_path = "~/GitHub/US_congress/FDSYS_scrapper"
-new_path_1 = os.path.expanduser(new_path)+'/output'
+outpath = os.path.expanduser(new_path)+'/output'
 #os.chdir(new_path_1)
 #setting date and time
 nname = time.strftime("%b")
@@ -92,11 +92,75 @@ def grab_meta(hr_links):
 		  	# date = str(tag.next)
 	# 	  	print "This is the Date: " + date
 
+	#Looking for Hearing Title and Serial Number
+	tags = soup.find('h3')
+	title = tags.string
+	title = title.strip()
 
-	return soup
+	return (pdf_link,rawtext,date,title)
 
 	#This can be used to extract raw text in a single line "bs4.BeautifulSoup(urllib.urlopen('http://google.com/?hl=en').read()).select('#footer a')"
 
+def write_file(csv_rows):
+	
+
+
+
+
+	write_path = out_path + '/' + "Congressional_Record_Parsed"
+	ret = os.access(write_path, os.F_OK)
+	row = date, title, pdf_link, rawtext  
+	if ret == True:
+		os.chdir(write_path)
+		date_str = str(Date)+'.txt'
+		if os.access(date_str, os.F_OK) == True:
+			os.remove(date_str)
+		outputfile = open(date_str, 'wb+')
+		outputfile.close()
+	else:
+		os.makedirs(write_path, 0777 )
+		os.chdir(write_path)
+		date_str = str(Date)+'.txt'
+		outputfile = open(date_str, 'wb+')
+		outputfile_content = "This data:"+ str(Date)+ '\n' + "This has this many speakers:" + str(NumberofSpeakers) + '\n'+ "This file is the:" + str(count) + '\n' + str(SpeakerMatchObj2)
+		outputfile.write(outputfile_content) 
+		outputfile.close()
+
+
+try:
+    finished='N' 
+    #This is using the xml parsing software to pull the text from the file
+    os.chdir(inpath)
+    tree = ET.parse(xmltmp)
+    root=tree.getroot()
+    debate=[]
+    date = ""
+    member = ""
+    member_contribution = ""
+    title = ""
+    header = ('Date', 'Debate', 'Member', 'Member Contribution')
+    os.chdir(outpath)
+    csvfile=xmltmp+'.csv'
+    test= open(csvfile, 'wb+')
+    writer = csv.writer(test)
+    writer.writerow(header)
+    for node in tree.iter():
+      row = date, title, member, member_contribution      
+      #print node.tag, node.attrib, node.text
+      if node.tag == 'date':
+                  date = node.attrib
+      if node.tag == 'title':
+                  title = node.text.encode('ascii', 'ignore').decode('ascii')
+      if node.tag == 'member':
+                  member = node.text
+      if node.tag == 'membercontribution':
+                  member_contribution = node.text.encode('ascii', 'ignore').decode('ascii')
+                  print row
+                  writer.writerow(row)
+    test.close()
+    finished = 'Y'  
+  except finished == 'N':
+    raise RunError('Parser module did not finish')
 
 "def get pdfs"
 "def write csv"
@@ -111,11 +175,15 @@ y=len(hr_links)
 
 print hr_links
 print y
-
+csv_rows = []
 for i in range(y):
 	print "Working on link" + str(i)
 	#We need to write something here that will collect the output from grab_meta into an arrary.  
-	test = grab_meta(hr_links[i])
+	pdf_link,rawtext,date,title = grab_meta(hr_links[i])
+	row = date, title, pdf_link, rawtext
+	csv_rows.append(row)
+write_file(csv_rows)
+
 
 
 
