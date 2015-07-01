@@ -19,7 +19,7 @@ from BeautifulSoup import BeautifulSoup
 
 new_path = "~/GitHub/US_congress/FDSYS_scrapper"
 new_path_1 = os.path.expanduser(new_path)+'/output'
-os.chdir(new_path_1)
+#os.chdir(new_path_1)
 #setting date and time
 nname = time.strftime("%b")
 date = time.strftime("%d")
@@ -71,43 +71,27 @@ def grab_meta(hr_links):
 
 
 	#Looking for link to pdf of hearing text
-	
-	# for tag in tags:
-	#  	if ".pdf" in tag['href']:
-	#  		pdf_link = str(tag['href'])
-	#  		print "This is the PDF link:" + pdf_link
-	#pprint(soup.select("td > a")) # all a tag that inside p
-	#soup.select('a[href="http://www.gpo.gov:"]')
-	#print "This is the PDF link:" + str(pdf_link)
 	pdf_link = soup.findAll(href=re.compile(".pdf"), limit = 1)
-	print "This is the Text link:"
+	print "This is the PDF link:" + str(pdf_link)
 
-	links = soup.findAll('td')
-	# [(l, l.parent.get('id')) for l in links]
+	#Looking for html link of raw text
 	tags = soup.findAll('a',href=True)
 	for tag in tags:
 	 	if "Text" in tag.contents:
 	 		text_link = str(tag['href'])
 	 		print "This is the Text link:" + text_link
+	rawtext = br.open(text_link)
+	rawtext = rawtext.read()
 
+	#Getting Hearing Date
+	tags = soup.findAll('td', text = re.compile("\w+\s\d+.\s\d+"), limit = 1)
+	date = str(tags)
+	print "This is the Date: " + date
+	# for tag in tags:
+	# 		print tag.contents
+		  	# date = str(tag.next)
+	# 	  	print "This is the Date: " + date
 
-	
-	#paraText = soup.findAll(text='Text')
-	#test = soup.findAll("td", { "class" : "page-details-budget-download-files-left-td" })
-	#print str(paraText)
-	#Now looking for the raw text
-	# tags_td = soup.td
-	# for tag in tags_td:
-	# 	print "Tag: " + str(tag.string)
-	# 	print "Tag Content: " + str(tag)
-	
-	#test = soup.select('table td tr')
-	#soup.find("b", { "class" : "two-col-layout-table" })
-	# test_1 = soup.find("h3", { "class" : "page-title" })
-	# test_2 = soup.findAll("td", { "class" : "page-details-budget-download-files-left-td" })
-	# print test_1
-	# print test_2
-	
 
 	return soup
 
