@@ -11,13 +11,14 @@
 ##########################
 
 import mechanize, sys, os, time, random, pprint, re, csv
+import urllib, urllib2, urlparse
 from BeautifulSoup import BeautifulSoup
 
 ###################################################
 #Section 2: Creating Directory to Place Zip Files #
 ###################################################
 
-new_path = "~/GitHub/US_congress/FDSYS_scrapper"
+new_path = "/mnt/home/isaacwil/us_congress"
 outpath = os.path.expanduser(new_path)
 #os.chdir(new_path_1)
 #setting date and time
@@ -37,7 +38,7 @@ def grab_links():
 	br.set_handle_robots(False)
 	src_links=[]
 	hr_links=[]
-	rge = range(1,468,1)
+	rge = range(1,20,1)
 	for i in rge:
 		tmp_link = 'http://www.gpo.gov/fdsys/search/search.action?sr={0}&originalSearch=&st=collection%3aCHRG+and+content%3a(teacher+quality)&ps=10&na=&se=&sb=re&timeFrame=&dateBrowse=&govAuthBrowse=&collection=&historical=false'.format(i)
 		src_links.append(tmp_link)
@@ -47,7 +48,8 @@ def grab_links():
 		response = br.open(s_link)
 		for link in br.links():
 		    if "More Information" in link.text:
-		            hr_links.append(link.url)
+				hr_links.append(link.url)
+				print "The hearing link is: " + str(link.url)
 	return hr_links
 
 
@@ -72,6 +74,8 @@ def grab_meta(hr_links):
 	#Looking for link to pdf of hearing text
 	pdf_link = soup.findAll(href=re.compile(".pdf"), limit = 1)
 	print "This is the PDF link:" + str(pdf_link)
+	pdf_link = str(pdf_link)
+	pdf_link = pdf_link.encode('ascii', 'ignore').decode('ascii')
 
 	#Looking for html link of raw text
 	tags = soup.findAll('a',href=True)
@@ -81,13 +85,14 @@ def grab_meta(hr_links):
 	 		print "This is the Text link:" + text_link
 	# rawtext = br.open(text_link)
 	# rawtext = rawtext.read()
-	rawtext = text_link
+	rawtext = text_link.encode('ascii', 'ignore').decode('ascii')
 
 	#Getting Hearing Date
 	tags = soup.findAll('td', text = re.compile("\w+\s\d+.\s\d+"), limit = 1)
 	date = str(tags)
 	date = date.strip("[ ]")
 	date = date.encode('utf-8')
+	date = date.encode('ascii', 'ignore').decode('ascii')
 	print "This is the Date: " + date
 	# for tag in tags:
 	# 		print tag.contents
@@ -135,17 +140,48 @@ def write_file(csv_rows = [], *args):
 			writer.writerow(csv_rows[i]) 
 		outputfile.close()
 
+
+def download_pdf(pdf_list = [], pdf_title=[], *args):
+	""" This function will download the PDF files into the folder"""
+
+	dl_path = outpath + '/' + "output"
+	os.chdir(dl_path)
+	max = len(pdf_list)
+	for i in range (0,max,1):
+			url = pdf_list[i]
+			pd = 100 * float(i)/float(max)
+			hm_path = dl_path + '/' + str(pdf_title[i]) + ".pdf"
+			print  "Percent Downloaded " + str(pd) + "%"
+			if os.path.isfile(hm_path) == True:
+				print "File already downloaded"
+			else:    
+				urllib.urlretrieve(url,hm_path) 
+
 ####################################				
 # Section 4: Running Functions 	   #
 ####################################
-hr_links = grab_links()
-y=len(hr_links)
-print "Total Number of Links: " + str(y)
-csv_rows = []
-for i in range(y):
-	print "Working on link" + str(i)
-	#We need to write something here that will collect the output from grab_meta into an arrary.  
-	pdf_link,rawtext,date,title = grab_meta(hr_links[i])
-	row = date, title, pdf_link, rawtext
-	csv_rows.append(row)
-write_file(csv_rows)
+def main():
+	""" This is the main function of the script """
+
+	# doing execfile() on this file will alter the current interpreter's
+	# environment so you can import libraries in the virtualenv
+	atf = "/mnt/home/isaacwil/us_congress/fdsys/bin/activate_this.py"
+	execfile(atf, dict(__file__= atf))
+	
+
+	hr_links = grab_links()
+	y=len(hr_links)
+	print "Total Number of Links: " + str(y)
+	csv_rows = []
+	pdf_list = []
+	pdf_title = []
+	for i in range(y):
+		print "Working on link" + str(i) 
+		pdf_link,rawtext,date,title = grab_meta(hr_links[i])
+		row = date, title, pdf_link, rawtext
+		csv_rows.append(row)
+		pdf_list.append(pdf_link)
+		pdf_title.append(title)
+	write_file(csv_rows)
+	download_pdf(pdf_list,pdf_title)
+main()
