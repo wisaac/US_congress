@@ -1,0 +1,27 @@
+#!/bin/bash -login
+ 
+### define resources needed:
+### walltime - how long you expect the job to run
+#PBS -l walltime=00:08:00:00
+
+### nodes:ppn - how many nodes & cores per node (ppn) that you require
+#PBS -l nodes=10:ppn=2
+ 
+### mem: amount of memory that the job will need
+#PBS -l mem=50gb
+ 
+### you can give your job a name for easier identification
+#PBS -N FDSYS_test
+
+#PBS -m abe
+#PBS -M isaacwil@msu.edu
+ 
+### change to the working directory where your code is located
+cd /mnt/home/isaacwil/us_congress
+### call your executable
+fds_hpcc.py
+
+### Creating a Zipfile for the PDFs
+zip -R Teacher_Quality_Hearings.zip "*.pdf"
+
+echo 'Everything is Done!'

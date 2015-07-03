@@ -10,6 +10,12 @@
 #Section 1: Module Import#
 ##########################
 
+# doing execfile() on this file will alter the current interpreter's
+# environment so you can import libraries in the virtualenv
+atf = "/mnt/home/isaacwil/us_congress/fdsys/bin/activate_this.py"
+execfile(atf, dict(__file__= atf))
+
+
 import mechanize, sys, os, time, random, pprint, re, csv
 import urllib, urllib2, urlparse
 from BeautifulSoup import BeautifulSoup
@@ -38,7 +44,7 @@ def grab_links():
 	br.set_handle_robots(False)
 	src_links=[]
 	hr_links=[]
-	rge = range(1,20,1)
+	rge = range(1,468,1)
 	for i in rge:
 		tmp_link = 'http://www.gpo.gov/fdsys/search/search.action?sr={0}&originalSearch=&st=collection%3aCHRG+and+content%3a(teacher+quality)&ps=10&na=&se=&sb=re&timeFrame=&dateBrowse=&govAuthBrowse=&collection=&historical=false'.format(i)
 		src_links.append(tmp_link)
@@ -70,25 +76,26 @@ def grab_meta(hr_links):
 	soup = BeautifulSoup(html)
 	#print(soup.prettify())
 
-
-	#Looking for link to pdf of hearing text
-	pdf_link = soup.findAll(href=re.compile(".pdf"), limit = 1)
-	print "This is the PDF link:" + str(pdf_link)
-	pdf_link = str(pdf_link)
-	pdf_link = pdf_link.encode('ascii', 'ignore').decode('ascii')
-
-	#Looking for html link of raw text
+	#Looking for html link of raw text and pdf of hearing text
+	pdf_l=""
+	text_link = ""
 	tags = soup.findAll('a',href=True)
 	for tag in tags:
+		if "PDF" in tag.contents:
+			pdf_l = str(tag['href'])
+			print "This is the PDF link:" + str(pdf_l)
 	 	if "Text" in tag.contents:
 	 		text_link = str(tag['href'])
 	 		print "This is the Text link:" + text_link
 	# rawtext = br.open(text_link)
 	# rawtext = rawtext.read()
 	rawtext = text_link.encode('ascii', 'ignore').decode('ascii')
+	pdf_link = pdf_l.encode('ascii', 'ignore').decode('ascii')
 
 	#Getting Hearing Date
 	tags = soup.findAll('td', text = re.compile("\w+\s\d+.\s\d+"), limit = 1)
+	if len(str(tags)) >= 30:
+		tags = "[9999]"
 	date = str(tags)
 	date = date.strip("[ ]")
 	date = date.encode('utf-8')
@@ -104,9 +111,7 @@ def grab_meta(hr_links):
 	title = tags.string
 	title = title.strip()
 
-	return (pdf_link,rawtext,date,title)
-
-	#This can be used to extract raw text in a single line "bs4.BeautifulSoup(urllib.urlopen('http://google.com/?hl=en').read()).select('#footer a')"
+	return (rawtext,pdf_link,date,title)
 
 def write_file(csv_rows = [], *args):
 	""" This function is to write out the files to csv """
@@ -114,7 +119,7 @@ def write_file(csv_rows = [], *args):
 	#This is creating the output folder path and determining whether the directory exists.
 	write_path = outpath + '/' + "output"
 	ret = os.access(write_path, os.F_OK)
-	header = ('Date', 'Title', 'PDF link', 'Raw Text link')
+	header = ('Hearing ID','Date', 'Title', 'PDF link', 'Raw Text link')
 	z = len(csv_rows)
 
 	#Writing the CSV File
@@ -154,6 +159,10 @@ def download_pdf(pdf_list = [], pdf_title=[], *args):
 			print  "Percent Downloaded " + str(pd) + "%"
 			if os.path.isfile(hm_path) == True:
 				print "File already downloaded"
+			elif url == "":
+				print "No Link Present at index num: " + str(pdf_title[i])
+			elif ".pdf" not in str(url):
+				print "Bad Link Present at index #: " + str(pdf_title[i])
 			else:    
 				urllib.urlretrieve(url,hm_path) 
 
@@ -162,26 +171,22 @@ def download_pdf(pdf_list = [], pdf_title=[], *args):
 ####################################
 def main():
 	""" This is the main function of the script """
-
-	# doing execfile() on this file will alter the current interpreter's
-	# environment so you can import libraries in the virtualenv
-	atf = "/mnt/home/isaacwil/us_congress/fdsys/bin/activate_this.py"
-	execfile(atf, dict(__file__= atf))
-	
-
 	hr_links = grab_links()
 	y=len(hr_links)
 	print "Total Number of Links: " + str(y)
 	csv_rows = []
 	pdf_list = []
 	pdf_title = []
+
 	for i in range(y):
 		print "Working on link" + str(i) 
-		pdf_link,rawtext,date,title = grab_meta(hr_links[i])
-		row = date, title, pdf_link, rawtext
+		rawtext,pdf_link,date,title = grab_meta(hr_links[i])
+		hearing_id = "tq_"+str(i)
+		row = hearing_id, date, title, pdf_link, rawtext
 		csv_rows.append(row)
 		pdf_list.append(pdf_link)
-		pdf_title.append(title)
+		pdf_title.append(hearing_id)
 	write_file(csv_rows)
 	download_pdf(pdf_list,pdf_title)
+
 main()
