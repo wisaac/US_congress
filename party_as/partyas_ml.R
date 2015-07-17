@@ -50,7 +50,7 @@ predict = cbind(train_docs$group,train_docs$ideol,train_docs$policy)
 colnames(predict) <- c("group_ref", "ideol_ref", "policy_ref")
 container <- create_container(DTM, predict, trainSize=1:750, testSize=751:1495, virgin=FALSE)
 
-
+GetContainer <- function
 
 
 
