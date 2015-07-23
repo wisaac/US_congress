@@ -3,6 +3,45 @@
 ##########################################################
 
 
+
+
+###################################################
+### Code Chunk 1 | Functions 	                  #
+###################################################
+
+GetCorpus <-function(textVector) {
+
+	doc.corpus <- Corpus(doc.vec)
+	summary(doc.corpus)
+	doc.corpus <- tm_map(doc.corpus, content_transformer(tolower), lazy=TRUE)
+	doc.corpus <- tm_map(doc.corpus, removePunctuation, lazy=TRUE)
+	doc.corpus <- tm_map(doc.corpus, removeNumbers, lazy=TRUE)
+	doc.corpus <- tm_map(doc.corpus, removeWords, stopwords("english"), lazy=TRUE)
+	doc.corpus <- tm_map(doc.corpus, stemDocument, lazy=TRUE)
+	doc.corpus <- tm_map(doc.corpus, stripWhitespace, lazy=TRUE)
+	doc.corpus <- tm_map(doc.corpus,content_transformer(function(x) iconv(x, to='UTF-8', sub= 'NA')), mc.cores=2)
+	return(doc.corpus)
+}
+
+GetContainer <- function(textvar){
+
+	#Taking Text and Creating Document Vector
+	train_docs$text <- gsub("[^[:alnum:]///' ]", "", textvar)
+	doc.vec <- VectorSource(train_docs$text)
+	doc.corpus <- GetCorpus(doc.vec)
+
+	#Creating Document Term Matrix
+	DTM <- DocumentTermMatrix(doc.corpus)
+	predict = cbind(train_docs$group,train_docs$ideol,train_docs$policy)
+	colnames(predict) <- c("group_ref", "ideol_ref", "policy_ref")
+	container <- create_container(DTM, predict, trainSize=1:750, testSize=751:1495, virgin=FALSE)
+	return(container)
+}
+
+
+
+
+
 ###################################################
 ### Code Chunk 1 | Setting File Dir & Libraries   #
 ###################################################
@@ -22,35 +61,6 @@ train_docs <- a[ which(a$group == 1 | a$group == 0), ]
 
 
 
-###################################################
-### Code Chunk 2 | Document Matrix                #
-###################################################
-
-GetCorpus <-function(textVector) {
-doc.corpus <- Corpus(doc.vec)
-summary(doc.corpus)
-doc.corpus <- tm_map(doc.corpus, content_transformer(tolower), lazy=TRUE)
-doc.corpus <- tm_map(doc.corpus, removePunctuation, lazy=TRUE)
-doc.corpus <- tm_map(doc.corpus, removeNumbers, lazy=TRUE)
-doc.corpus <- tm_map(doc.corpus, removeWords, stopwords("english"), lazy=TRUE)
-doc.corpus <- tm_map(doc.corpus, stemDocument, lazy=TRUE)
-doc.corpus <- tm_map(doc.corpus, stripWhitespace, lazy=TRUE)
-doc.corpus <- tm_map(doc.corpus,content_transformer(function(x) iconv(x, to='UTF-8', sub= 'NA')), mc.cores=2)
-return(doc.corpus)
-}
-
-#Taking Text and Creating Document Vector
-train_docs$text <- gsub("[^[:alnum:]///' ]", "", train_docs$text)
-doc.vec <- VectorSource(train_docs$text)
-doc.corpus <- GetCorpus(doc.vec)
-
-#Creating Document Term Matrix
-DTM <- DocumentTermMatrix(doc.corpus)
-predict = cbind(train_docs$group,train_docs$ideol,train_docs$policy)
-colnames(predict) <- c("group_ref", "ideol_ref", "policy_ref")
-container <- create_container(DTM, predict, trainSize=1:750, testSize=751:1495, virgin=FALSE)
-
-GetContainer <- function
 
 
 
