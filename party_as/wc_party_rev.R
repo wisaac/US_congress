@@ -90,11 +90,11 @@ doc.corpus.rep <- GetCorpus(doc.vec.rep)
 
 
 #Creating Document Term Matrix
-TDM.D <- TermDocumentMatrix(doc.corpus.dem, control = list(weighting = function(x) weightTfIdf(x, normalize = FALSE), stopwords = FALSE))
+TDM.D <- TermDocumentMatrix(doc.corpus.dem, control = list(weighting = function(x) weightTfIdf(x, normalize = FALSE), stopwords = TRUE))
 wordfreq=findFreqTerms(TDM.D, lowfreq=100)
 
 
-TDM.R <- TermDocumentMatrix(doc.corpus.rep, control = list(weighting = function(x) weightTfIdf(x, normalize = FALSE), stopwords = FALSE))
+TDM.R <- TermDocumentMatrix(doc.corpus.rep, control = list(weighting = function(x) weightTfIdf(x, normalize = FALSE), stopwords = TRUE))
 wordfreq=findFreqTerms(TDM.R, lowfreq=100)
 
 termFreq.D <- as.matrix(TDM.D)
@@ -129,7 +129,9 @@ names(wc_total) <- c("term","freq.dem","freq.rep")
 wc_total <- wc_total[order(-wc_total$freq.dem),] 
 wc_total$freq.dem <- log(wc_total$freq.dem)
 wc_total$freq.rep <- log(wc_total$freq.rep)
-wc_total <- subset(wc_total, freq.dem>=4.8 | freq.rep>=4.8)
+wc_total$diff <- log((wc_total$freq.dem/wc_total$freq.rep)) #This is D-Lot Score
+wc_total <- subset(wc_total, diff >= 1.85 | diff <= -.8)
+wc_total <- wc_total[order(-wc_total$diff),] 
 
 #Now I need to reshape the dataset in order to plot it the way I want
 wc_total <- reshape(wc_total, 
@@ -138,11 +140,18 @@ wc_total <- reshape(wc_total,
            timevar = "freq", 
            times = c("freq.dem","freq.rep"), 
            direction = "long")
-wc_total <- with(wc_total, data.frame(term,pid,freq))
-# I think I want a dot plot that is red for reps and blue for dems
-ggplot(wc_total, aes(x = term, y = pid, colour = freq)) + geom_point() + opts(title = "Irrigation Area by Region")
+wc_total <- with(wc_total, data.frame(term,pid,freq,diff))
+wc_total <- wc_total[order(-wc_total$diff),] 
+names(wc_total) <- c("term","freq","pid", "diff")
+wc_total$name <- factor(wc_total$term, levels = wc_total$term[order(wc_total$diff)])
 
-qplot(data = wc_total, x = term, y = freq.dem, stat="identity", main = "Term Frequencies", xlab="Terms") + coord_flip()
+# I think I want a dot plot that is red for reps and blue for dems
+g <- ggplot(wc_total, aes(x = name, y = freq, colour = pid)) + geom_point()
+g <- g + coord_flip()
+g <- g+theme(legend.title=element_blank())
+g <- g + scale_color_manual(values=c("dodgerblue4", "red2"))
+
+
 
 termFreq <- subset(termFreq, termFreq>=50)
 term.freq <- subset(term.freq, term.freq >= 15)
