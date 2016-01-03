@@ -90,11 +90,13 @@ doc.corpus.rep <- GetCorpus(doc.vec.rep)
 
 
 #Creating Document Term Matrix
-TDM.D <- TermDocumentMatrix(doc.corpus.dem, control = list(weighting = function(x) weightTfIdf(x, normalize = FALSE), stopwords = TRUE))
+
+TDM.D <- TermDocumentMatrix(doc.corpus.dem, control = list(tokenize = BigramTokenizer, stopwords = TRUE))
+#TDM.D <- TermDocumentMatrix(doc.corpus.dem, control = list(weighting = function(x) weightTfIdf(x, normalize = FALSE), stopwords = TRUE))
 wordfreq=findFreqTerms(TDM.D, lowfreq=100)
 
-
-TDM.R <- TermDocumentMatrix(doc.corpus.rep, control = list(weighting = function(x) weightTfIdf(x, normalize = FALSE), stopwords = TRUE))
+TDM.R <- TermDocumentMatrix(doc.corpus.rep, control = list(tokenize = BigramTokenizer, stopwords = TRUE))
+#TDM.R <- TermDocumentMatrix(doc.corpus.rep, control = list(weighting = function(x) weightTfIdf(x, normalize = FALSE), stopwords = TRUE))
 wordfreq=findFreqTerms(TDM.R, lowfreq=100)
 
 termFreq.D <- as.matrix(TDM.D)
@@ -129,8 +131,9 @@ names(wc_total) <- c("term","freq.dem","freq.rep")
 wc_total <- wc_total[order(-wc_total$freq.dem),] 
 wc_total$freq.dem <- log(wc_total$freq.dem)
 wc_total$freq.rep <- log(wc_total$freq.rep)
-wc_total$diff <- log((wc_total$freq.dem/wc_total$freq.rep)) #This is D-Lot Score
-wc_total <- subset(wc_total, diff >= 1.85 | diff <= -.8)
+wc_total$diff <- (wc_total$freq.dem-wc_total$freq.rep) #This is D-Lot Score
+#wc_total$diff <- log((wc_total$freq.dem/wc_total$freq.rep)) #This is D-Lot Score
+#wc_total <- subset(wc_total, diff >= .62 | diff <= -.3)
 wc_total <- wc_total[order(-wc_total$diff),] 
 
 #Now I need to reshape the dataset in order to plot it the way I want
